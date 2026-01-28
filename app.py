@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 
 app = Flask(__name__)
-app.secret_key = 'votre_cle_secrete_a_changer_en_production'
+app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete_a_changer_en_production')
 
 # Configuration de la base de données
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exam_website.db'
@@ -14,6 +14,49 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 from models import db, User, Role, QCM, Question, Answer, UserAttempt, UserAnswer
 
 db.init_app(app)
+
+# Initialiser la base de données au démarrage
+def initialize_database():
+    """Initialise la base de données avec les rôles et l'admin par défaut"""
+    with app.app_context():
+        # Créer toutes les tables
+        db.create_all()
+
+        # Vérifier si les rôles existent déjà
+        if Role.query.count() == 0:
+            # Créer les rôles
+            admin_role = Role(name='admin', description='Administrateur du système')
+            people_role = Role(name='people', description='Utilisateur standard')
+
+            db.session.add(admin_role)
+            db.session.add(people_role)
+            db.session.commit()
+
+            print("Rôles créés : admin et people")
+
+        # Vérifier si l'admin existe déjà
+        admin_user = User.query.filter_by(email='oceane.camus14@gmail.com').first()
+        if not admin_user:
+            # Créer l'utilisateur admin par défaut
+            admin_role = Role.query.filter_by(name='admin').first()
+            admin_user = User(
+                email='oceane.camus14@gmail.com',
+                first_name='Oceane',
+                last_name='Camus',
+                role_id=admin_role.id
+            )
+            admin_user.set_password('Doody123!')
+
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Compte admin créé avec succès")
+        else:
+            print("Le compte admin existe déjà")
+
+        print("Base de données initialisée avec succès !")
+
+# Appeler l'initialisation au démarrage
+initialize_database()
 
 # Décorateur pour protéger les routes nécessitant une connexion
 def login_required(f):
@@ -70,7 +113,7 @@ def connexion():
             session['user_role'] = user.role.name
 
             # Mettre à jour la date de dernière connexion
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(UTC)
             db.session.commit()
 
             flash(f'Bienvenue {user.first_name} !', 'success')
