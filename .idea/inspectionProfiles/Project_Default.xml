@@ -1,0 +1,59 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="8">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+            <item index="6" class="java.lang.String" itemvalue="flask" />
+            <item index="7" class="java.lang.String" itemvalue="button" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="accelerate" />
+          <option value="diffusers" />
+          <option value="transformers" />
+          <option value="PyQt5" />
+          <option value="Pillow" />
+          <option value="openvino" />
+          <option value="optimum-intel" />
+          <option value="onnx" />
+          <option value="numpy" />
+          <option value="onnxruntime" />
+          <option value="pydantic" />
+          <option value="typing-extensions" />
+          <option value="pyyaml" />
+          <option value="gradio" />
+          <option value="peft" />
+          <option value="opencv-python" />
+          <option value="omegaconf" />
+          <option value="controlnet-aux" />
+          <option value="mediapipe" />
+          <option value="tomesd" />
+          <option value="mcp" />
+          <option value="fastapi-mcp" />
+          <option value="ffmpy" />
+          <option value="ffprobe" />
+          <option value="ffprobe-python" />
+          <option value="huggingface-hub" />
+          <option value="imageio" />
+          <option value="imageio-ffmpeg" />
+          <option value="moviepy" />
+          <option value="mutagen" />
+          <option value="openai-whisper" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

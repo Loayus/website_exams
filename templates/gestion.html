@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <div class="dashboard">
+                <h2>Panneau d'administration</h2>
+
+                <!-- Affichage des messages flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Informations de l'admin connecté -->
+                <div class="user-card">
+                    <h3>Connecté en tant que</h3>
+                    <div class="user-info-grid">
+                        <div class="info-item">
+                            <span class="label">Nom complet:</span>
+                            <span class="value">{{ user.first_name }} {{ user.last_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Email:</span>
+                            <span class="value">{{ user.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Rôle:</span>
+                            <span class="value"><span class="badge badge-active">{{ user.role.name }}</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liste des utilisateurs -->
+                <div class="dashboard-actions">
+                    <h3>Gestion des utilisateurs ({{ users|length }} utilisateurs)</h3>
+
+                    <div class="overflow-auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Rôle</th>
+                                    <th>Statut</th>
+                                    <th>Inscription</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users %}
+                                <tr>
+                                    <td>{{ u.id }}</td>
+                                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                                    <td>{{ u.email }}</td>
+                                    <td>
+                                        <span class="badge {% if u.role.name == 'admin' %}badge-active{% else %}badge-inactive{% endif %}">
+                                            {{ u.role.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if u.is_active %}badge-active{% else %}badge-inactive{% endif %}" id="status-badge-{{ u.id }}">
+                                            {% if u.is_active %}Actif{% else %}Inactif{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if u.id != user.id %}
+                                            <button onclick="toggleUserStatus({{ u.id }})" class="btn-action btn-toggle" id="toggle-btn-{{ u.id }}">
+                                                {% if u.is_active %}Désactiver{% else %}Activer{% endif %}
+                                            </button>
+                                            <button onclick="deleteUser({{ u.id }})" class="btn-action btn-delete">
+                                                Supprimer
+                                            </button>
+                                        {% else %}
+                                            <span class="text-muted text-italic">Votre compte</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Statistiques des rôles -->
+                <div class="dashboard-actions mt-2">
+                    <h3>Statistiques des rôles</h3>
+                    <div class="actions-grid">
+                        {% for role in roles %}
+                        <div class="action-card">
+                            <h4>{{ role.name|capitalize }}</h4>
+                            <p><strong>{{ role.users|length }}</strong> utilisateur(s)</p>
+                            <p class="role-description">{{ role.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Mon Site Web. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleUserStatus(userId) {
+            if (!confirm('Êtes-vous sûr de vouloir changer le statut de cet utilisateur ?')) {
+                return;
+            }
+
+            fetch(`/api/user/${userId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mettre à jour le badge de statut
+                    const badge = document.getElementById(`status-badge-${userId}`);
+                    const toggleBtn = document.getElementById(`toggle-btn-${userId}`);
+
+                    if (data.is_active) {
+                        badge.textContent = 'Actif';
+                        badge.className = 'badge badge-active';
+                        toggleBtn.textContent = 'Désactiver';
+                    } else {
+                        badge.textContent = 'Inactif';
+                        badge.className = 'badge badge-inactive';
+                        toggleBtn.textContent = 'Activer';
+                    }
+
+                    alert(data.message);
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('ATTENTION : Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ? Cette action est irréversible !')) {
+                return;
+            }
+
+            fetch(`/api/user/${userId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    </script>
+
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un QCM - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='creer_qcm.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <div class="qcm-builder">
+                <h2>Créer un nouveau QCM</h2>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form id="qcm-form" method="POST" action="/creer-qcm">
+                    <div class="form-group">
+                        <label for="title">Titre du QCM *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ex: Anatomie du système musculaire">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="3" placeholder="Description du QCM (optionnel)"></textarea>
+                    </div>
+
+                    <div id="questions-container">
+                        <!-- Les questions seront ajoutées ici -->
+                    </div>
+
+                    <button type="button" onclick="addQuestion()" class="btn-add">
+                        Ajouter une question
+                    </button>
+
+                    <input type="hidden" name="questions_data" id="questions_data">
+                    <button type="submit" class="btn-primary">Créer le QCM</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+
+    <script>
+        let questionCount = 0;
+
+        function addQuestion() {
+            questionCount++;
+            const container = document.getElementById('questions-container');
+
+            const questionBlock = document.createElement('div');
+            questionBlock.className = 'question-block';
+            questionBlock.id = `question-${questionCount}`;
+
+            questionBlock.innerHTML = `
+                <div class="question-header">
+                    <h3>Question ${questionCount}</h3>
+                    <button type="button" onclick="removeQuestion(${questionCount})" class="btn-remove">
+                        Supprimer
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>Texte de la question *</label>
+                    <textarea class="question-text" rows="2" required placeholder="Entrez votre question..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Réponses (exactement 5 réponses obligatoires) - Cochez toutes les bonnes réponses</label>
+                    <div id="answers-${questionCount}">
+                        <!-- Les réponses seront ajoutées ici -->
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(questionBlock);
+
+            // Ajouter exactement 5 réponses par défaut (non modifiable)
+            for (let i = 0; i < 5; i++) {
+                addAnswerFixed(questionCount, i + 1);
+            }
+        }
+
+        function removeQuestion(questionId) {
+            const question = document.getElementById(`question-${questionId}`);
+            if (question) {
+                question.remove();
+            }
+        }
+
+        function addAnswerFixed(questionId, answerNumber) {
+            const answersContainer = document.getElementById(`answers-${questionId}`);
+
+            const answerItem = document.createElement('div');
+            answerItem.className = 'answer-item';
+            answerItem.innerHTML = `
+                <input type="text" placeholder="Réponse ${answerNumber}" class="answer-text" required>
+                <label class="checkbox-label-flex">
+                    <input type="checkbox" class="answer-correct">
+                    Correcte
+                </label>
+            `;
+
+            answersContainer.appendChild(answerItem);
+        }
+
+        document.getElementById('qcm-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Collecter les données des questions
+            const questions = [];
+            const questionBlocks = document.querySelectorAll('.question-block');
+
+            if (questionBlocks.length === 0) {
+                alert('Veuillez ajouter au moins une question');
+                return;
+            }
+
+            for (let block of questionBlocks) {
+                const questionText = block.querySelector('.question-text').value.trim();
+
+                if (!questionText) {
+                    alert('Veuillez remplir toutes les questions');
+                    return;
+                }
+
+                const answers = [];
+                const answerItems = block.querySelectorAll('.answer-item');
+
+                if (answerItems.length !== 5) {
+                    alert('Chaque question doit avoir exactement 5 réponses');
+                    return;
+                }
+
+                let hasCorrectAnswer = false;
+
+                for (let item of answerItems) {
+                    const answerText = item.querySelector('.answer-text').value.trim();
+                    const isCorrect = item.querySelector('.answer-correct').checked;
+
+                    if (!answerText) {
+                        alert('Veuillez remplir toutes les réponses');
+                        return;
+                    }
+
+                    if (isCorrect) {
+                        hasCorrectAnswer = true;
+                    }
+
+                    answers.push({
+                        text: answerText,
+                        is_correct: isCorrect
+                    });
+                }
+
+                if (!hasCorrectAnswer) {
+                    alert('Chaque question doit avoir au moins une réponse correcte');
+                    return;
+                }
+
+                questions.push({
+                    text: questionText,
+                    answers: answers
+                });
+            }
+
+            // Enregistrer les données dans le champ caché
+            document.getElementById('questions_data').value = JSON.stringify(questions);
+
+            // Soumettre le formulaire
+            this.submit();
+        });
+
+        // Ajouter une première question au chargement
+        window.addEventListener('load', function() {
+            addQuestion();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Révisions de STAPS</h1>
+            <nav>
+                <ul>
+                    <li><a href="/">Accueil</a></li>
+                    <li><a href="/connexion">Connexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="auth-container">
+                <h2>Créer un compte</h2>
+
+                <!-- Affichage des messages d'erreur -->
+                {% if error %}
+                <div class="alert alert-error">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/inscription">
+                    <div class="form-group">
+                        <label for="first_name">Prénom</label>
+                        <input
+                            type="text"
+                            id="first_name"
+                            name="first_name"
+                            placeholder="Votre prénom"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last_name">Nom</label>
+                        <input
+                            type="text"
+                            id="last_name"
+                            name="last_name"
+                            placeholder="Votre nom"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Adresse email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="votre.email@exemple.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Minimum 8 caractères"
+                            required
+                            minlength="8"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirmer le mot de passe</label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Confirmez votre mot de passe"
+                            required
+                            minlength="8"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn-submit">S'inscrire</button>
+                </form>
+
+                <div class="form-footer">
+                    <p>Déjà un compte ? <a href="/connexion">Se connecter</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+</body>
+</html>

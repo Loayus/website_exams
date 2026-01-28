@@ -1,0 +1,28 @@
+<header>
+    <div class="container">
+        <div class="header-content">
+            <h1>Révisions de STAPS</h1>
+            <div class="auth-buttons">
+                {% if not user %}
+                    <a href="/connexion" class="btn btn-login">Connexion</a>
+                    <a href="/inscription" class="btn btn-register">Inscription</a>
+                {% endif %}
+                {% if user %}
+                    <a href="/deconnexion" class="btn btn-register">Déconnexion</a>
+                {% endif %}
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/">Accueil</a></li>
+                {% if user %}
+                    <li><a href="/qcm">QCM</a></li>
+                    {% if user.is_admin() %}
+                        <li><a href="/mes-qcm">Mes QCM</a></li>
+                        <li><a href="/gestion">Gestion</a></li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</header>

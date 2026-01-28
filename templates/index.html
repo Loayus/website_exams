@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mb-2">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <h2>Bienvenue{% if user %}, {{ user.first_name }}{% endif %}</h2>
+
+            {% if user %}
+                <div class="user-card max-width-600">
+                    <h3>Votre compte</h3>
+                    <div class="user-info-grid">
+                        <div class="info-item">
+                            <span class="label">Nom complet:</span>
+                            <span class="value">{{ user.first_name }} {{ user.last_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Email:</span>
+                            <span class="value">{{ user.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Rôle:</span>
+                            <span class="value"><span class="badge badge-active">{{ user.role.name }}</span></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Membre depuis:</span>
+                            <span class="value">{{ user.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions-grid mt-2 max-width-600">
+                    <div class="action-card">
+                        <h4>Passer des QCM</h4>
+                        <p>Accédez aux QCM disponibles et testez vos connaissances</p>
+                        <a href="/qcm" class="btn btn-register mt-1 inline-block">Voir les QCM</a>
+                    </div>
+                    {% if user.is_admin() %}
+                    <div class="action-card">
+                        <h4>Créer un QCM</h4>
+                        <p>Créez de nouveaux QCM pour vos étudiants</p>
+                        <a href="/creer-qcm" class="btn btn-register mt-1 inline-block">Créer un QCM</a>
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p>Bienvenue sur la plateforme de révisions de STAPS !</p>
+                <p>Veuillez vous connecter ou créer un compte pour accéder aux fonctionnalités.</p>
+            {% endif %}
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+</body>
+</html>

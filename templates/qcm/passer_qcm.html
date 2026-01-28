@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ qcm.title }} - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='passer_qcm.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <div class="qcm-container">
+                <div class="qcm-header">
+                    <h2>{{ qcm.title }}</h2>
+                    {% if qcm.description %}
+                        <p class="qcm-info">{{ qcm.description }}</p>
+                    {% endif %}
+                    <p class="qcm-info">
+                        {{ qcm.questions|length }} questions
+                        | Créé par {{ qcm.creator.first_name }} {{ qcm.creator.last_name }}
+                    </p>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress"></div>
+                </div>
+                <p class="progress-text">
+                    <span id="answered-count">0</span> / {{ qcm.questions|length }} questions répondues
+                </p>
+
+                <form method="POST" action="/qcm/{{ qcm.id }}/soumettre" id="qcm-form">
+                    {% for question in qcm.questions %}
+                        <div class="question-block">
+                            <div class="question-number">Question {{ loop.index }} sur {{ qcm.questions|length }}</div>
+                            <div class="question-text">{{ question.question_text }}</div>
+
+                            {% for answer in question.answers|sort(attribute='order') %}
+                                <div class="answer-option">
+                                    <input
+                                        type="checkbox"
+                                        name="question_{{ question.id }}"
+                                        value="{{ answer.id }}"
+                                        id="answer_{{ answer.id }}"
+                                        onchange="updateProgress()"
+                                    >
+                                    <label for="answer_{{ answer.id }}">{{ answer.answer_text }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn-submit-qcm">Valider mes réponses</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+
+    <script>
+        function updateProgress() {
+            const totalQuestions = {{ qcm.questions|length }};
+            // Compter le nombre de questions qui ont au moins une réponse cochée
+            const answeredQuestions = Array.from(document.querySelectorAll('.question-block')).filter(block => {
+                return block.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+            }).length;
+
+            const percentage = (answeredQuestions / totalQuestions) * 100;
+
+            document.getElementById('progress').style.width = percentage + '%';
+            document.getElementById('answered-count').textContent = answeredQuestions;
+        }
+
+        document.getElementById('qcm-form').addEventListener('submit', function(e) {
+            const totalQuestions = {{ qcm.questions|length }};
+            // Vérifier que toutes les questions ont au moins une réponse
+            const answeredQuestions = Array.from(document.querySelectorAll('.question-block')).filter(block => {
+                return block.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+            }).length;
+
+            if (answeredQuestions < totalQuestions) {
+                e.preventDefault();
+                alert(`Veuillez répondre à toutes les questions. ${answeredQuestions}/${totalQuestions} répondues.`);
+                return false;
+            }
+
+            if (!confirm('Êtes-vous sûr de vouloir valider vos réponses ? Vous ne pourrez plus les modifier.')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

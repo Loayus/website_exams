@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QCM Disponibles - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='liste_qcm.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <h2 class="qcm-title">QCM Disponibles</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if qcms %}
+                <div class="qcm-grid">
+                    {% for qcm in qcms %}
+                        <div class="qcm-card">
+                            <h3>{{ qcm.title }}</h3>
+                            {% if qcm.description %}
+                                <p>{{ qcm.description }}</p>
+                            {% endif %}
+
+                            <div class="qcm-meta">
+                                <span>{{ qcm.questions|length }} questions</span>
+                                <span>Par {{ qcm.creator.first_name }} {{ qcm.creator.last_name }}</span>
+                            </div>
+
+                            {% if qcm.id in attempts %}
+                                <div class="qcm-score">
+                                    Dernier score : {{ "%.1f"|format(attempts[qcm.id].score) }}%
+                                </div>
+                                <small class="qcm-last-attempt">
+                                    Le {{ attempts[qcm.id].date.strftime('%d/%m/%Y à %H:%M') }}
+                                </small>
+                            {% endif %}
+
+                            <a href="/qcm/{{ qcm.id }}" class="btn-qcm">
+                                {% if qcm.id in attempts %}Refaire le QCM{% else %}Commencer le QCM{% endif %}
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-qcm-message">
+                    Aucun QCM disponible pour le moment.
+                </p>
+            {% endif %}
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+</body>
+</html>

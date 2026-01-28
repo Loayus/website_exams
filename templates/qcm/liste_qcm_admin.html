@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes QCM - Révisons !</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <div class="dashboard">
+                <div class="header-flex">
+                    <h2>Gestion des QCM</h2>
+                    <a href="/creer-qcm" class="btn btn-register">Créer un QCM</a>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="dashboard-actions">
+                    <h3>Mes QCM ({{ qcms|length }} QCM)</h3>
+
+                    {% if qcms %}
+                        <div class="overflow-auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Titre</th>
+                                        <th>Questions</th>
+                                        <th>Créé par</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for qcm in qcms %}
+                                    <tr>
+                                        <td>{{ qcm.id }}</td>
+                                        <td><strong>{{ qcm.title }}</strong></td>
+                                        <td>{{ qcm.questions|length }}</td>
+                                        <td>{{ qcm.creator.first_name }} {{ qcm.creator.last_name }}</td>
+                                        <td>{{ qcm.created_at.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            <span class="badge {% if qcm.is_active %}badge-active{% else %}badge-inactive{% endif %}" id="status-badge-{{ qcm.id }}">
+                                                {% if qcm.is_active %}Actif{% else %}Inactif{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button onclick="toggleQCMStatus({{ qcm.id }})" class="btn-action btn-toggle" id="toggle-btn-{{ qcm.id }}">
+                                                {% if qcm.is_active %}Désactiver{% else %}Activer{% endif %}
+                                            </button>
+                                            <button onclick="deleteQCM({{ qcm.id }})" class="btn-action btn-delete">
+                                                Supprimer
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center padding-2 text-muted">
+                            Aucun QCM créé pour le moment. <a href="/creer-qcm">Créer votre premier QCM</a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+
+    <script>
+        function toggleQCMStatus(qcmId) {
+            if (!confirm('Êtes-vous sûr de vouloir changer le statut de ce QCM ?')) {
+                return;
+            }
+
+            fetch(`/api/qcm/${qcmId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById(`status-badge-${qcmId}`);
+                    const toggleBtn = document.getElementById(`toggle-btn-${qcmId}`);
+
+                    if (data.is_active) {
+                        badge.textContent = 'Actif';
+                        badge.className = 'badge badge-active';
+                        toggleBtn.textContent = 'Désactiver';
+                    } else {
+                        badge.textContent = 'Inactif';
+                        badge.className = 'badge badge-inactive';
+                        toggleBtn.textContent = 'Activer';
+                    }
+
+                    alert(data.message);
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+
+        function deleteQCM(qcmId) {
+            if (!confirm('ATTENTION : Êtes-vous sûr de vouloir supprimer définitivement ce QCM ? Cette action est irréversible !')) {
+                return;
+            }
+
+            fetch(`/api/qcm/${qcmId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    </script>
+</body>
+</html>

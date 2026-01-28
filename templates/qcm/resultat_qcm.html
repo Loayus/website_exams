@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultat - {{ attempt.qcm.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='resultat_qcm.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main>
+        <div class="container">
+            <div class="resultat-container">
+                <div class="score-banner">
+                    <div class="score-label">Votre score</div>
+                    <div class="score-value">{{ "%.1f"|format(attempt.score) }}%</div>
+                    <div class="score-label">
+                        {% set total_points = namespace(value=0.0) %}
+                        {% set correct_count = namespace(value=0) %}
+                        {% for question in attempt.qcm.questions %}
+                            {% set user_answer_ids = attempt.user_answers|selectattr('question_id', 'equalto', question.id)|map(attribute='answer_id')|list %}
+                            {% set correct_answer_ids = question.answers|selectattr('is_correct')|map(attribute='id')|list %}
+
+                            {# Calculer le score de la question (simplifié pour l'affichage) #}
+                            {% set selected_ids = user_answer_ids|list %}
+                            {% set correct_ids = correct_answer_ids|list %}
+                            {% set correct_checked = (selected_ids | select('in', correct_ids) | list | length) %}
+                            {% set incorrect_checked = (selected_ids | reject('in', correct_ids) | list | length) %}
+                            {% set total_correct = correct_ids|length %}
+
+                            {# Logique simplifiée - calcul approximatif du score #}
+                            {% if selected_ids|sort == correct_ids|sort %}
+                                {% set total_points.value = total_points.value + 1.0 %}
+                                {% set correct_count.value = correct_count.value + 1 %}
+                            {% elif correct_checked == total_correct and incorrect_checked == 1 %}
+                                {% if total_correct == 1 %}
+                                    {% set total_points.value = total_points.value + 0.5 %}
+                                {% elif total_correct == 2 %}
+                                    {% set total_points.value = total_points.value + 0.66 %}
+                                {% elif total_correct == 3 %}
+                                    {% set total_points.value = total_points.value + 0.66 %}
+                                {% elif total_correct == 4 %}
+                                    {% set total_points.value = total_points.value + 0.75 %}
+                                {% endif %}
+                            {% elif correct_checked > 0 and incorrect_checked == 0 %}
+                                {# Réponses incomplètes mais sans erreur #}
+                                {% if total_correct == 2 and correct_checked == 1 %}
+                                    {% set total_points.value = total_points.value + 0.5 %}
+                                {% elif total_correct == 3 and correct_checked == 2 %}
+                                    {% set total_points.value = total_points.value + 0.66 %}
+                                {% elif total_correct == 3 and correct_checked == 1 %}
+                                    {% set total_points.value = total_points.value + 0.33 %}
+                                {% elif total_correct == 4 and correct_checked == 3 %}
+                                    {% set total_points.value = total_points.value + 0.75 %}
+                                {% elif total_correct == 4 and correct_checked == 2 %}
+                                    {% set total_points.value = total_points.value + 0.5 %}
+                                {% elif total_correct == 4 and correct_checked == 1 %}
+                                    {% set total_points.value = total_points.value + 0.2 %}
+                                {% elif total_correct == 5 and correct_checked == 4 %}
+                                    {% set total_points.value = total_points.value + 0.8 %}
+                                {% elif total_correct == 5 and correct_checked == 3 %}
+                                    {% set total_points.value = total_points.value + 0.6 %}
+                                {% elif total_correct == 5 and correct_checked == 2 %}
+                                    {% set total_points.value = total_points.value + 0.4 %}
+                                {% elif total_correct == 5 and correct_checked == 1 %}
+                                    {% set total_points.value = total_points.value + 0.2 %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        <strong>{{ "%.2f"|format(total_points.value) }} / {{ attempt.qcm.questions|length }} points</strong><br>
+                        {{ correct_count.value }} questions parfaitement répondues
+                    </div>
+                </div>
+
+                <h2 class="correction-title">Correction détaillée</h2>
+
+                {% for question in attempt.qcm.questions|sort(attribute='order') %}
+                    {% set user_answers = attempt.user_answers|selectattr('question_id', 'equalto', question.id)|list %}
+                    {% set user_answer_ids = user_answers|map(attribute='answer_id')|list %}
+                    {% set correct_answer_ids = question.answers|selectattr('is_correct')|map(attribute='id')|list %}
+                    {% set is_correct = user_answer_ids|sort == correct_answer_ids|sort %}
+
+                    {# Calculer le score de cette question #}
+                    {% set selected_ids = user_answer_ids|list %}
+                    {% set correct_ids = correct_answer_ids|list %}
+                    {% set correct_checked = (selected_ids | select('in', correct_ids) | list | length) %}
+                    {% set incorrect_checked = (selected_ids | reject('in', correct_ids) | list | length) %}
+                    {% set total_correct = correct_ids|length %}
+                    {% set question_score = 0.0 %}
+
+                    {# Calcul du score selon le système de notation #}
+                    {% if selected_ids|sort == correct_ids|sort %}
+                        {% set question_score = 1.0 %}
+                    {% elif correct_checked == total_correct and incorrect_checked == 1 %}
+                        {% if total_correct == 1 %}
+                            {% set question_score = 0.5 %}
+                        {% elif total_correct == 2 %}
+                            {% set question_score = 0.66 %}
+                        {% elif total_correct == 3 %}
+                            {% set question_score = 0.66 %}
+                        {% elif total_correct == 4 %}
+                            {% set question_score = 0.75 %}
+                        {% endif %}
+                    {% elif correct_checked > 0 and incorrect_checked == 0 %}
+                        {% if total_correct == 2 and correct_checked == 1 %}
+                            {% set question_score = 0.5 %}
+                        {% elif total_correct == 3 and correct_checked == 2 %}
+                            {% set question_score = 0.66 %}
+                        {% elif total_correct == 3 and correct_checked == 1 %}
+                            {% set question_score = 0.33 %}
+                        {% elif total_correct == 4 and correct_checked == 3 %}
+                            {% set question_score = 0.75 %}
+                        {% elif total_correct == 4 and correct_checked == 2 %}
+                            {% set question_score = 0.5 %}
+                        {% elif total_correct == 4 and correct_checked == 1 %}
+                            {% set question_score = 0.2 %}
+                        {% elif total_correct == 5 and correct_checked == 4 %}
+                            {% set question_score = 0.8 %}
+                        {% elif total_correct == 5 and correct_checked == 3 %}
+                            {% set question_score = 0.6 %}
+                        {% elif total_correct == 5 and correct_checked == 2 %}
+                            {% set question_score = 0.4 %}
+                        {% elif total_correct == 5 and correct_checked == 1 %}
+                            {% set question_score = 0.2 %}
+                        {% endif %}
+                    {% elif correct_checked == total_correct and incorrect_checked == 2 %}
+                        {% if total_correct == 2 %}
+                            {% set question_score = 0.5 %}
+                        {% elif total_correct == 3 %}
+                            {% set question_score = 0.33 %}
+                        {% endif %}
+                    {% elif correct_checked == 1 and incorrect_checked == 1 %}
+                        {% if total_correct == 2 %}
+                            {% set question_score = 0.25 %}
+                        {% endif %}
+                    {% elif correct_checked == 2 and incorrect_checked == 1 %}
+                        {% if total_correct == 3 %}
+                            {% set question_score = 0.33 %}
+                        {% endif %}
+                    {% elif correct_checked == 3 and incorrect_checked == 1 %}
+                        {% if total_correct == 4 %}
+                            {% set question_score = 0.5 %}
+                        {% endif %}
+                    {% elif correct_checked == 2 and incorrect_checked == 1 %}
+                        {% if total_correct == 4 %}
+                            {% set question_score = 0.25 %}
+                        {% endif %}
+                    {% elif correct_checked == total_correct and incorrect_checked == 3 %}
+                        {% if total_correct == 2 %}
+                            {% set question_score = 0.4 %}
+                        {% endif %}
+                    {% endif %}
+
+                    <div class="correction-block {% if is_correct %}correct{% else %}incorrect{% endif %}">
+                        <div class="question-header">
+                            <span class="question-number">Question {{ loop.index }} - {{ "%.2f"|format(question_score) }}/1 point</span>
+                            <span class="status-badge {% if is_correct %}correct{% else %}incorrect{% endif %}">
+                                {% if is_correct %}✓ Correct (1.0){% else %}✗ {{ "%.2f"|format(question_score) }} point{% if question_score > 1 %}s{% endif %}{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="question-text">{{ question.question_text }}</div>
+
+                        {% for answer in question.answers|sort(attribute='order') %}
+                            {% set is_user_answer = answer.id in user_answer_ids %}
+                            {% set class_name = '' %}
+                            {% set icon = '' %}
+
+                            {% if is_user_answer and answer.is_correct %}
+                                {% set class_name = 'correct-answer' %}
+                                {% set icon = '' %}
+                            {% elif is_user_answer and not answer.is_correct %}
+                                {% set class_name = 'wrong-answer' %}
+                                {% set icon = '' %}
+                            {% elif answer.is_correct and not is_user_answer %}
+                                {% set class_name = 'correct-answer' %}
+                                {% set icon = '' %}
+                            {% endif %}
+
+                            <div class="answer-review {{ class_name }}">
+                                {% if icon %}
+                                    <span class="answer-icon">{{ icon }}</span>
+                                {% endif %}
+                                <span class="answer-text-flex">{{ answer.answer_text }}</span>
+                                {% if is_user_answer and not answer.is_correct %}
+                                    <span class="answer-label-incorrect">Votre réponse (incorrecte)</span>
+                                {% elif is_user_answer and answer.is_correct %}
+                                    <span class="answer-label-correct">Votre réponse (correcte)</span>
+                                {% elif answer.is_correct and not is_user_answer %}
+                                    <span class="answer-label-missed">Bonne réponse (non cochée)</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <div class="btn-actions">
+                    <a href="/qcm/{{ attempt.qcm.id }}" class="btn-action btn-retry">Refaire ce QCM</a>
+                    <a href="/qcm" class="btn-action btn-back">← Retour aux QCM</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+</body>
+</html>
